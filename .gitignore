@@ -1,0 +1,6 @@
+secret/
+bin/
+*.so
+*.h
+tmp
+temp
