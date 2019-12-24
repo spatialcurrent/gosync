@@ -27,5 +27,8 @@ func CheckBucket(bucket string) error {
 	if strings.Contains(bucket, "*") {
 		return &BucketError{Value: fmt.Sprintf("bucket cannot contain \"*\": %q", bucket)}
 	}
+	if strings.Contains(bucket, "/") {
+		return &BucketError{Value: fmt.Sprintf("bucket cannot contain \"/\": %q", bucket)}
+	}
 	return nil
 }

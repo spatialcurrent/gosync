@@ -13,6 +13,8 @@ import (
 	"golang.org/x/sync/errgroup"
 	"path/filepath"
 	"strings"
+
+	"github.com/spatialcurrent/gosync/pkg/s3util"
 )
 
 func SyncLocalToS3(source string, bucket string, keyPrefix string, uploader *s3manager.Uploader, verbose bool) error {
@@ -56,7 +58,12 @@ func SyncLocalToS3(source string, bucket string, keyPrefix string, uploader *s3m
 			fmt.Println(fmt.Sprintf("[ %d ] : %s => s3://%s/%s", i+1, fillRight(p, sourceMaxLength), bucket, key))
 		}
 		g.Go(func() error {
-			err := CopyLocalToS3(p, bucket, key, uploader)
+			err := s3util.Upload(&s3util.UploadInput{
+				Uploader: uploader,
+				Path:     p,
+				Bucket:   bucket,
+				Key:      key,
+			})
 			if err != nil {
 				return fmt.Errorf("error uploading %q to \"%s/%s\": %w", p, bucket, key, err)
 			}

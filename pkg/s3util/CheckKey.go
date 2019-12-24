@@ -12,26 +12,26 @@ import (
 	"strings"
 )
 
-type KeyPrefixError struct {
+type KeyError struct {
 	Value string
 }
 
-func (e *KeyPrefixError) Error() string {
+func (e *KeyError) Error() string {
 	return e.Value
 }
 
-func CheckKeyPrefix(prefix string) error {
+func CheckKey(prefix string) error {
 	if strings.Contains(prefix, "~") {
-		return &KeyPrefixError{Value: fmt.Sprintf("key prefix cannot contain \"~\": %q", prefix)}
+		return &KeyError{Value: fmt.Sprintf("key cannot contain \"~\": %q", prefix)}
 	}
 	if strings.Contains(prefix, "*") {
-		return &KeyPrefixError{Value: fmt.Sprintf("key prefix cannot contain \"*\": %q", prefix)}
+		return &KeyError{Value: fmt.Sprintf("key cannot contain \"*\": %q", prefix)}
 	}
 	if strings.HasPrefix(prefix, "/") {
-		return &KeyPrefixError{Value: fmt.Sprintf("key prefix cannot start with \"/\": %q", prefix)}
+		return &KeyError{Value: fmt.Sprintf("key cannot start with \"/\": %q", prefix)}
 	}
 	if strings.HasSuffix(prefix, "/") {
-		return &KeyPrefixError{Value: fmt.Sprintf("key prefix cannot end with \"/\": %q", prefix)}
+		return &KeyError{Value: fmt.Sprintf("key cannot end with \"/\": %q", prefix)}
 	}
 	return nil
 }

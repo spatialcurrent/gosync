@@ -78,7 +78,12 @@ func Sync(input *SyncInput) error {
 			if input.Verbose {
 				fmt.Println(MsgLocalFiles)
 			}
-			return SyncLocalToLocal(sourcePath, destinationPath, input.Parents, input.Verbose)
+			return SyncLocalToLocal(&SyncLocalToLocalInput{
+				Source:      sourcePath,
+				Destination: destinationPath,
+				Parents:     input.Parents,
+				Verbose:     input.Verbose,
+			})
 		}
 
 		if destinationScheme == "s3" {

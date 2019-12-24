@@ -8,6 +8,7 @@
 package s3util
 
 import (
+	"errors"
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -25,6 +26,9 @@ type DownloadInput struct {
 }
 
 func Download(input *DownloadInput) error {
+	if input.Downloader == nil {
+		return errors.New("downloader is nil")
+	}
 	if input.Parents {
 		err := os.MkdirAll(filepath.Dir(input.Path), 0755)
 		if err != nil {

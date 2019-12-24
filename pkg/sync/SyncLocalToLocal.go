@@ -16,41 +16,48 @@ import (
 	"os"
 )
 
-func SyncLocalToLocal(source string, destination string, parents bool, verbose bool) error {
+type SyncLocalToLocalInput struct {
+	Source      string
+	Destination string
+	Parents     bool
+	Verbose     bool
+}
 
-	if strings.HasPrefix(source, "~") {
-		return fmt.Errorf("source %q starts with \"~\"", source)
+func SyncLocalToLocal(input *SyncLocalToLocalInput) error {
+
+	if strings.HasPrefix(input.Source, "~") {
+		return fmt.Errorf("source %q starts with \"~\"", input.Source)
 	}
 
-	if strings.HasPrefix(destination, "~") {
-		return fmt.Errorf("destination %q starts with \"~\"", destination)
+	if strings.HasPrefix(input.Destination, "~") {
+		return fmt.Errorf("destination %q starts with \"~\"", input.Destination)
 	}
 
-	sourcePaths, err := CollectFiles([]string{source})
+	sourcePaths, err := CollectFiles([]string{input.Source})
 	if err != nil {
-		return fmt.Errorf("error collecting files from %q: %w", source, err)
+		return fmt.Errorf("error collecting files from %q: %w", input.Source, err)
 	}
 
-	if strings.Contains(destination, WildcardCharacter) {
-		return fmt.Errorf("destination cannot contain wildcard: %q", destination)
+	if strings.Contains(input.Destination, WildcardCharacter) {
+		return fmt.Errorf("destination cannot contain wildcard: %q", input.Destination)
 	}
 
-	destinationFile, err := os.Open(destination)
+	destinationFile, err := os.Open(input.Destination)
 	if err != nil {
 		if os.IsNotExist(err) {
-			if !parents {
-				return fmt.Errorf("destination directory %q does not exist and parents is not true", destination)
+			if !input.Parents {
+				return fmt.Errorf("destination directory %q does not exist and parents is not true", input.Destination)
 			}
 		} else {
-			return fmt.Errorf("unable to open destination %q: %w", destination, err)
+			return fmt.Errorf("unable to open destination %q: %w", input.Destination, err)
 		}
 	} else {
 		fileInfo, err := destinationFile.Stat()
 		if err != nil {
-			return fmt.Errorf("error stating destination %q: %w", destination, err)
+			return fmt.Errorf("error stating destination %q: %w", input.Destination, err)
 		} else {
 			if !fileInfo.Mode().IsDir() {
-				return fmt.Errorf("destination %q exists, but is not a directory", destination)
+				return fmt.Errorf("destination %q exists, but is not a directory", input.Destination)
 			}
 		}
 	}
@@ -58,18 +65,18 @@ func SyncLocalToLocal(source string, destination string, parents bool, verbose b
 	sourceMaxLength := maxLength(sourcePaths)
 
 	var g errgroup.Group
-	for _, p := range sourcePaths {
+	for i, p := range sourcePaths {
 		p := p
-		r, err := filepath.Rel(source, p)
+		r, err := filepath.Rel(input.Source, p)
 		if err != nil {
-			return fmt.Errorf("error calculating relative path between %q and %q: %w", source, p, err)
+			return fmt.Errorf("error calculating relative path between %q and %q: %w", input.Source, p, err)
 		}
-		destinationPath := filepath.Join(destination, r)
-		if verbose {
-			fmt.Println(fmt.Sprintf("%s    =>    %s", fillRight(p, sourceMaxLength), destinationPath))
+		destinationPath := filepath.Join(input.Destination, r)
+		if input.Verbose {
+			fmt.Println(fmt.Sprintf("[ %d ] : %s    =>    %s", i+1, fillRight(p, sourceMaxLength), destinationPath))
 		}
 		g.Go(func() error {
-			err := CopyLocalToLocal(p, destinationPath, parents)
+			err := CopyLocalToLocal(p, destinationPath, input.Parents)
 			if err != nil {
 				return fmt.Errorf("error copying %q to %q: %w", p, destinationPath, err)
 			}
