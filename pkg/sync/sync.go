@@ -18,6 +18,11 @@ import (
 
 const (
 	WildcardCharacter = "*"
+
+	MsgLocalFiles = "Synchronizing local directories"
+	MsgNewSession = "Creating AWS Session"
+	MsgUploadS3   = "Uploading to AWS S3"
+	MsgDownloadS3 = "Downloading from AWS S3"
 )
 
 func maxLength(s []string) int {
@@ -53,23 +58,30 @@ func (e *errUnsupported) Error() string {
 	return fmt.Sprintf("unsupported: %q => %q", e.Source, e.Destination)
 }
 
-func Sync(source string, destination string, parents bool, verbose bool) error {
+type SyncInput struct {
+	Source      string
+	Destination string
+	Parents     bool
+	Limit       int
+	Verbose     bool
+}
 
-	sourceScheme, sourcePath := splitUri(source)
+func Sync(input *SyncInput) error {
 
-	destinationScheme, destinationPath := splitUri(destination)
+	sourceScheme, sourcePath := splitUri(input.Source)
+
+	destinationScheme, destinationPath := splitUri(input.Destination)
 
 	if sourceScheme == "file" || sourceScheme == "" {
 
 		if destinationScheme == "file" || destinationScheme == "" {
-			return SyncLocalToLocal(sourcePath, destinationPath, parents, verbose)
+			if input.Verbose {
+				fmt.Println(MsgLocalFiles)
+			}
+			return SyncLocalToLocal(sourcePath, destinationPath, input.Parents, input.Verbose)
 		}
 
 		if destinationScheme == "s3" {
-
-			if verbose {
-				fmt.Println("Uploading to AWS S3")
-			}
 
 			if err := s3util.CheckPath(destinationPath); err != nil {
 				return fmt.Errorf("error with destination path %q: %w", destinationPath, err)
@@ -77,8 +89,8 @@ func Sync(source string, destination string, parents bool, verbose bool) error {
 
 			i := strings.Index(destinationPath, "/")
 
-			if verbose {
-				fmt.Println("creating AWS session")
+			if input.Verbose {
+				fmt.Println(MsgNewSession)
 			}
 
 			s, err := awsutil.NewSession()
@@ -86,16 +98,20 @@ func Sync(source string, destination string, parents bool, verbose bool) error {
 				return fmt.Errorf("error creating new session: %w", err)
 			}
 
+			if input.Verbose {
+				fmt.Println(MsgUploadS3)
+			}
+
 			return SyncLocalToS3(
 				sourcePath,
 				destinationPath[0:i],
 				destinationPath[i+1:],
 				s3manager.NewUploader(s),
-				verbose,
+				input.Verbose,
 			)
 		}
 
-		return &errUnsupported{Source: source, Destination: destination}
+		return &errUnsupported{Source: input.Source, Destination: input.Destination}
 	}
 
 	if sourceScheme == "s3" {
@@ -106,14 +122,10 @@ func Sync(source string, destination string, parents bool, verbose bool) error {
 
 		i := strings.Index(sourcePath, "/")
 
-		if verbose {
-			fmt.Println("creating AWS session")
-		}
-
 		if destinationScheme == "file" || destinationScheme == "" {
 
-			if verbose {
-				fmt.Println("Downloading from AWS S3")
+			if input.Verbose {
+				fmt.Println(MsgNewSession)
 			}
 
 			s, err := awsutil.NewSession()
@@ -121,18 +133,25 @@ func Sync(source string, destination string, parents bool, verbose bool) error {
 				return fmt.Errorf("error creating new session: %w", err)
 			}
 
-			return SyncS3ToLocal(
-				sourcePath[0:i],
-				sourcePath[i+1:],
-				destinationPath,
-				s3.New(s),
-				s3manager.NewDownloader(s),
-				verbose)
+			if input.Verbose {
+				fmt.Println(MsgDownloadS3)
+			}
+
+			return SyncS3ToLocal(&SyncS3ToLocalInput{
+				Bucket:      sourcePath[0:i],
+				KeyPrefix:   sourcePath[i+1:],
+				Destination: destinationPath,
+				Client:      s3.New(s),
+				Downloader:  s3manager.NewDownloader(s),
+				Parents:     input.Parents,
+				Limit:       input.Limit,
+				Verbose:     input.Verbose,
+			})
 		}
 
-		return &errUnsupported{Source: source, Destination: destination}
+		return &errUnsupported{Source: input.Source, Destination: input.Destination}
 	}
 
-	return &errUnsupported{Source: source, Destination: destination}
+	return &errUnsupported{Source: input.Source, Destination: input.Destination}
 
 }

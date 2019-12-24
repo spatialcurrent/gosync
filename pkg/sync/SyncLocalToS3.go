@@ -45,7 +45,7 @@ func SyncLocalToS3(source string, bucket string, keyPrefix string, uploader *s3m
 	sourceMaxLength := maxLength(sourcePaths)
 
 	var g errgroup.Group
-	for _, p := range sourcePaths {
+	for i, p := range sourcePaths {
 		p := p
 		r, err := filepath.Rel(source, p)
 		if err != nil {
@@ -53,7 +53,7 @@ func SyncLocalToS3(source string, bucket string, keyPrefix string, uploader *s3m
 		}
 		key := filepath.Join(keyPrefix, r)
 		if verbose {
-			fmt.Println(fmt.Sprintf("%s => s3://%s/%s", fillRight(p, sourceMaxLength), bucket, key))
+			fmt.Println(fmt.Sprintf("[ %d ] : %s => s3://%s/%s", i+1, fillRight(p, sourceMaxLength), bucket, key))
 		}
 		g.Go(func() error {
 			err := CopyLocalToS3(p, bucket, key, uploader)

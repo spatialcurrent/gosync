@@ -13,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"os"
+	"path/filepath"
 )
 
 type DownloadInput struct {
@@ -20,9 +21,16 @@ type DownloadInput struct {
 	Bucket     string
 	Key        string
 	Path       string
+	Parents    bool
 }
 
 func Download(input *DownloadInput) error {
+	if input.Parents {
+		err := os.MkdirAll(filepath.Dir(input.Path), 0755)
+		if err != nil {
+			return fmt.Errorf("error creating parent directories for %q: %w", input.Path, err)
+		}
+	}
 	outputFile, err := os.Create(input.Path)
 	if err != nil {
 		return fmt.Errorf("error creating destination file %q: %w", input.Path, err)

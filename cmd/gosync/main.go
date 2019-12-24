@@ -39,7 +39,7 @@ func initViper(cmd *cobra.Command) (*viper.Viper, error) {
 
 func checkConfig(v *viper.Viper, args []string) error {
 	if len(args) != 2 {
-		return fmt.Errorf("expecting 2 positional argument (source and destination), but found %d arguments", len(args))
+		return fmt.Errorf("expecting 2 positional arguments for source and destination, but found %d arguments", len(args))
 	}
 	return nil
 }
@@ -50,6 +50,8 @@ func main() {
 		DisableFlagsInUseLine: true,
 		Short:                 "gosync",
 		Long:                  `gosyc is a super simple command line program for synchronizing two directories, including support for AWS S3 buckets.`,
+		SilenceErrors:         true,
+		SilenceUsage:          true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			v, err := initViper(cmd)
@@ -62,14 +64,23 @@ func main() {
 			}
 
 			verbose := v.GetBool(cli.FlagVerbose)
-			parents := v.GetBool(cli.FlagParents)
 
 			source := args[0]
 			destination := args[1]
 
-			err = sync.Sync(source, destination, parents, verbose)
+			err = sync.Sync(&sync.SyncInput{
+				Source:      source,
+				Destination: destination,
+				Parents:     v.GetBool(cli.FlagParents),
+				Limit:       v.GetInt(cli.FlagLimit),
+				Verbose:     verbose,
+			})
 			if err != nil {
 				return fmt.Errorf("error syncing from %q to %q: %w", source, destination, err)
+			}
+
+			if verbose {
+				fmt.Println("Done.")
 			}
 
 			return nil
@@ -80,7 +91,7 @@ func main() {
 
 	if err := cmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, "gosync: "+err.Error())
-		fmt.Fprintln(os.Stderr, "Try gosync --help for more information.")
+		fmt.Fprintln(os.Stderr, "Try \"gosync --help\" for more information.")
 		os.Exit(1)
 	}
 }

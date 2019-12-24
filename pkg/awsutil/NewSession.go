@@ -9,11 +9,14 @@ package awsutil
 
 import (
 	"fmt"
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 )
 
 func NewSession() (*session.Session, error) {
-	s, err := session.NewSession()
+	s, err := session.NewSession(&aws.Config{
+		CredentialsChainVerboseErrors: aws.Bool(true),
+	})
 	if err != nil {
 		return nil, fmt.Errorf("error creating new session: %w", err)
 	}

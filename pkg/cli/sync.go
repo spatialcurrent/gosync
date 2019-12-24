@@ -13,9 +13,11 @@ import (
 
 const (
 	FlagParents = "parents"
+	FlagLimit   = "limit"
 )
 
 // InitSyncFlags initializes the Sync flags.
 func InitSyncFlags(flag *pflag.FlagSet) {
 	flag.BoolP(FlagParents, "p", false, "create parent directories")
+	flag.IntP(FlagLimit, "l", -1, "limit number of files copied")
 }
