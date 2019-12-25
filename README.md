@@ -4,7 +4,7 @@
 
 ## Description
 
-**gosync** is a super simple command line program for synchronizing a source and destination, including AWS S3 buckets.  **gosync** supports the following operating systems and architectures.
+**gosync** is a simple command line program for synchronizing a source and destination, including AWS S3 buckets.  **gosync** supports the following operating systems and architectures.
 
 ## Platforms
 

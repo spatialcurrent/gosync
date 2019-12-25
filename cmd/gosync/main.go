@@ -46,7 +46,7 @@ func checkConfig(v *viper.Viper, args []string) error {
 
 func main() {
 	cmd := &cobra.Command{
-		Use:                   "gosync [SOURCE] [DESTINATION]",
+		Use:                   "gosync SOURCE DESTINATION",
 		DisableFlagsInUseLine: true,
 		Short:                 "gosync",
 		Long:                  `gosyc is a super simple command line program for synchronizing two directories, including support for AWS S3 buckets.`,
