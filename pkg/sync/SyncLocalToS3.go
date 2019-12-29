@@ -9,10 +9,11 @@ package sync
 
 import (
 	"fmt"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	"golang.org/x/sync/errgroup"
 	"path/filepath"
 	"strings"
+
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/spatialcurrent/gosync/pkg/s3util"
 )

@@ -9,11 +9,13 @@ package sync
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+
 	"github.com/spatialcurrent/gosync/pkg/awsutil"
 	"github.com/spatialcurrent/gosync/pkg/s3util"
-	"strings"
 )
 
 const (

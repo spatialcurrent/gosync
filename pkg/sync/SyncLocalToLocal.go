@@ -9,11 +9,11 @@ package sync
 
 import (
 	"fmt"
-	"golang.org/x/sync/errgroup"
+	"os"
 	"path/filepath"
 	"strings"
 
-	"os"
+	"golang.org/x/sync/errgroup"
 )
 
 type SyncLocalToLocalInput struct {
