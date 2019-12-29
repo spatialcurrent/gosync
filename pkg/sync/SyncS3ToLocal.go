@@ -73,7 +73,7 @@ func SyncS3ToLocal(input *SyncS3ToLocalInput) error {
 		}
 		destinationPath := filepath.Join(input.Destination, r)
 		if input.Verbose {
-			fmt.Println(fmt.Sprintf("[ %d ] : s3://%s/%s => file://%s", i+1, input.Bucket, key, destinationPath))
+			fmt.Printf("[ %d ] : s3://%s/%s => file://%s\n", i+1, input.Bucket, key, destinationPath)
 		}
 		g.Go(func() error {
 			err := s3util.Download(&s3util.DownloadInput{
