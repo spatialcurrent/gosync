@@ -61,6 +61,10 @@ vet: ## Vet Go source code
 test_go: ## Run Go tests
 	bash scripts/test.sh
 
+.PHONY: test_cli
+test_cli: ## Run CLI tests
+	bash scripts/test-cli.sh
+
 .PHONY: build
 build: build_cli  ## Build all artifacts
 

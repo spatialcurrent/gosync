@@ -21,7 +21,6 @@ import (
 )
 
 func initFlags(flag *pflag.FlagSet) {
-	cli.InitAWSFlags(flag)
 	cli.InitSyncFlags(flag)
 	cli.InitVerboseFlags(flag)
 }
@@ -49,7 +48,7 @@ func main() {
 		Use:                   "gosync SOURCE DESTINATION",
 		DisableFlagsInUseLine: true,
 		Short:                 "gosync",
-		Long:                  `gosyc is a super simple command line program for synchronizing two directories, including support for AWS S3 buckets.`,
+		Long:                  `gosyc is a super simple command line program for synchronizing two directories specified by URI.  gosync currently supports local directories and AWS S3 buckets as a source or destination.  AWS S3 buckets are specified using the "s3://" scheme.  Local files are specified using the "file://" scheme or a path without a scheme.  gosync synchronizes regular files and will create directories as needed if the parents flag is set.`,
 		SilenceErrors:         true,
 		SilenceUsage:          true,
 		RunE: func(cmd *cobra.Command, args []string) error {

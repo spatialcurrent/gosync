@@ -8,15 +8,28 @@
 package awsutil
 
 import (
+	"errors"
 	"fmt"
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 )
 
-func NewSession() (*session.Session, error) {
-	s, err := session.NewSession(&aws.Config{
-		CredentialsChainVerboseErrors: aws.Bool(true),
+type NewSessionInput struct {
+	Region  string
+	Verbose bool
+}
+
+func NewSession(input *NewSessionInput) (*session.Session, error) {
+	if input == nil {
+		return nil, errors.New("input is nil")
+	}
+	config, err := NewConfig(&NewConfigInput{
+		Region:  input.Region,
+		Verbose: input.Verbose,
 	})
+	if err != nil {
+		return nil, fmt.Errorf("error creating new config: %w", err)
+	}
+	s, err := session.NewSession(config)
 	if err != nil {
 		return nil, fmt.Errorf("error creating new session: %w", err)
 	}

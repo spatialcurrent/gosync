@@ -25,30 +25,6 @@ const (
 	MsgDownloadS3 = "Downloading from AWS S3"
 )
 
-func maxLength(s []string) int {
-	max := 0
-	for _, v := range s {
-		if i := len(v); i > max {
-			max = i
-		}
-	}
-	return max
-}
-
-func fillRight(s string, l int) string {
-	if len(s) < l {
-		return s + strings.Repeat(" ", l-len(s))
-	}
-	return s
-}
-
-func splitUri(uri string) (string, string) {
-	if i := strings.Index(uri, "://"); i != -1 {
-		return uri[0:i], uri[i+3:]
-	}
-	return "", uri
-}
-
 type errUnsupported struct {
 	Source      string
 	Destination string
@@ -98,7 +74,9 @@ func Sync(input *SyncInput) error {
 				fmt.Println(MsgNewSession)
 			}
 
-			s, err := awsutil.NewSession()
+			s, err := awsutil.NewSession(&awsutil.NewSessionInput{
+				Verbose: input.Verbose,
+			})
 			if err != nil {
 				return fmt.Errorf("error creating new session: %w", err)
 			}
@@ -133,7 +111,9 @@ func Sync(input *SyncInput) error {
 				fmt.Println(MsgNewSession)
 			}
 
-			s, err := awsutil.NewSession()
+			s, err := awsutil.NewSession(&awsutil.NewSessionInput{
+				Verbose: input.Verbose,
+			})
 			if err != nil {
 				return fmt.Errorf("error creating new session: %w", err)
 			}

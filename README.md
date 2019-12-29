@@ -4,7 +4,7 @@
 
 ## Description
 
-**gosync** is a simple command line program for synchronizing a source and destination, including AWS S3 buckets.  **gosync** supports the following operating systems and architectures.
+**gosync** is a super simple command line program for synchronizing a source and destination, including AWS S3 buckets.  **gosync** synchronizes regular files and will create directories as needed if the parents flag is set.  **gosync** supports the following operating systems and architectures.
 
 ## Platforms
 
@@ -39,19 +39,16 @@ Find releases at [https://github.com/spatialcurrent/gosync/releases](https://git
 See the usage below or the following examples.
 
 ```shell
-gosync is a super simple utility to print environment variables in a custom format.
-Supports the following formats: csv, bson, go, gob, json, properties, tags, toml, tsv, yaml.
+gosyc is a super simple command line program for synchronizing two directories specified by URI.  gosync currently supports local directories and AWS S3 buckets as a source or destination.  AWS S3 buckets are specified using the "s3://" scheme.  Local files are specified using the "file://" scheme or a path without a scheme.  gosync synchronizes regular files and will create directories as needed if the parents flag is set.
 
 Usage:
-  gosync [-f FORMAT] [flags] [variable]...
+  gosync SOURCE DESTINATION
 
 Flags:
-  -f, --format string   output format, one of: csv, bson, go, gob, json, properties, tags, toml, tsv, yaml (default "properties")
-  -h, --help            help for gosync
-  -0, --null            use a NUL byte to end each line instead of a newline character
-  -p, --pretty          use pretty output format
-  -r, --reversed        if output is sorted, sort in reverse alphabetical order
-  -s, --sorted          sort output
+  -h, --help        help for gosync
+  -l, --limit int   limit number of files copied (default -1)
+  -p, --parents     create parent directories
+  -v, --verbose     verbose output
 ```
 
 # Examples
@@ -59,7 +56,7 @@ Flags:
 **Sync Local Directories**
 
 ```shell
-gosync /path/to/source/dir /path/to/destination/directory
+gosync /path/to/source/dir /path/to/destination/dir
 ```
 
 **Upload to AWS S3**
@@ -84,7 +81,7 @@ Use `make help` to see help information for each target.
 
 **CLI**
 
-The `make build_cli` script is used to build executables for Linux and Windows.  Use `make install` for standard installation as a go executable.
+Use `make build_cli` to build executables for Linux and Windows.  Use `make install` for standard installation as a go executable.
 
 ## Testing
 

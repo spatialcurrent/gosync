@@ -7,13 +7,12 @@
 
 package sync
 
-import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-)
-
-func TestSyncLocalToLocal(t *testing.T) {
-	err := SyncLocalToLocal("testdata", "tmp", true, true)
-	assert.NoError(t, err)
+func maxLength(s []string) int {
+	max := 0
+	for _, v := range s {
+		if i := len(v); i > max {
+			max = i
+		}
+	}
+	return max
 }
