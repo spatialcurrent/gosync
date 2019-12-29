@@ -35,17 +35,21 @@ func Download(input *DownloadInput) error {
 			return fmt.Errorf("error creating parent directories for %q: %w", input.Path, err)
 		}
 	}
-	outputFile, err := os.Create(input.Path)
+	file, err := os.Create(input.Path)
 	if err != nil {
 		return fmt.Errorf("error creating destination file %q: %w", input.Path, err)
 	}
-	defer outputFile.Close()
-	_, err = input.Downloader.Download(outputFile, &s3.GetObjectInput{
+	_, err = input.Downloader.Download(file, &s3.GetObjectInput{
 		Bucket: aws.String(input.Bucket),
 		Key:    aws.String(input.Key),
 	})
 	if err != nil {
+		_ = file.Close() // silently close output file
 		return fmt.Errorf("error downloading file s3://%s/%s: %w", input.Bucket, input.Key, err)
+	}
+	err = file.Close()
+	if err != nil {
+		return fmt.Errorf("error closing file after downloading from AWS s3: %w", err)
 	}
 	return nil
 }

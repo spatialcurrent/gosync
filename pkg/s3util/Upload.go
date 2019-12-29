@@ -43,7 +43,6 @@ func Upload(input *UploadInput) error {
 	if err != nil {
 		return fmt.Errorf("error opening source file at %q: %w", input.Path, err)
 	}
-	defer file.Close()
 
 	_, err = input.Uploader.Upload(&s3manager.UploadInput{
 		Bucket: aws.String(input.Bucket),
@@ -52,6 +51,11 @@ func Upload(input *UploadInput) error {
 	})
 	if err != nil {
 		return fmt.Errorf("error uploading file to AWS S3: %w", err)
+	}
+
+	err = file.Close()
+	if err != nil {
+		return fmt.Errorf("error closing file after uploading to AWS s3: %w", err)
 	}
 
 	return nil

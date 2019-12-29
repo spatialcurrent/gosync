@@ -45,17 +45,29 @@ func CopyLocalToLocal(source string, destination string, parents bool) error {
 	if err != nil {
 		return fmt.Errorf("error opening source file at %q: %w", source, err)
 	}
-	defer sourceFile.Close()
 
 	destinationFile, err := os.OpenFile(destination, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
 	if err != nil {
+		_ = sourceFile.Close() // silently close source file
 		return fmt.Errorf("error creating destination file at %q: %w", source, err)
 	}
-	defer destinationFile.Close()
 
 	_, err = io.Copy(destinationFile, sourceFile)
 	if err != nil {
+		_ = sourceFile.Close()      // silently close source file
+		_ = destinationFile.Close() // silently close destination file
 		return fmt.Errorf("error copying from %q to %q", source, destination)
+	}
+
+	err = sourceFile.Close()
+	if err != nil {
+		_ = destinationFile.Close() // silently close destination file
+		return fmt.Errorf("error closing source file after copying: %w", err)
+	}
+
+	err = destinationFile.Close()
+	if err != nil {
+		return fmt.Errorf("error closing destination file after copying: %w", err)
 	}
 
 	return nil
