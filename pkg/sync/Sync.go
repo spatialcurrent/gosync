@@ -44,9 +44,9 @@ type SyncInput struct {
 
 func Sync(input *SyncInput) error {
 
-	sourceScheme, sourcePath := splitUri(input.Source)
+	sourceScheme, sourcePath := splitURI(input.Source)
 
-	destinationScheme, destinationPath := splitUri(input.Destination)
+	destinationScheme, destinationPath := splitURI(input.Destination)
 
 	if sourceScheme == "file" || sourceScheme == "" {
 

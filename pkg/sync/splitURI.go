@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-func splitUri(uri string) (string, string) {
+func splitURI(uri string) (string, string) {
 	if i := strings.Index(uri, "://"); i != -1 {
 		return uri[0:i], uri[i+3:]
 	}

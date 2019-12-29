@@ -33,11 +33,11 @@ type SyncS3ToLocalInput struct {
 func SyncS3ToLocal(input *SyncS3ToLocalInput) error {
 
 	if err := s3util.CheckBucket(input.Bucket); err != nil {
-		return fmt.Errorf("error with source bucket %q: %w:", input.Bucket, err)
+		return fmt.Errorf("error with source bucket %q: %w", input.Bucket, err)
 	}
 
 	if err := s3util.CheckKeyPrefix(input.KeyPrefix); err != nil {
-		return fmt.Errorf("error with source key prefix %q: %w:", input.KeyPrefix, err)
+		return fmt.Errorf("error with source key prefix %q: %w", input.KeyPrefix, err)
 	}
 
 	if strings.HasPrefix(input.Destination, "~") {

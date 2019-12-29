@@ -73,7 +73,7 @@ func SyncLocalToLocal(input *SyncLocalToLocalInput) error {
 		}
 		destinationPath := filepath.Join(input.Destination, r)
 		if input.Verbose {
-			fmt.Println(fmt.Sprintf("[ %d ] : %s    =>    %s", i+1, fillRight(p, sourceMaxLength), destinationPath))
+			fmt.Printf("[ %d ] : %s    =>    %s\n", i+1, fillRight(p, sourceMaxLength), destinationPath)
 		}
 		g.Go(func() error {
 			err := CopyLocalToLocal(p, destinationPath, input.Parents)

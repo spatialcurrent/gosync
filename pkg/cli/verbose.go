@@ -15,7 +15,7 @@ const (
 	FlagVerbose = "verbose"
 )
 
-// InitAWSFlags initializes the AWS flags.
+// InitVerboseFlags initializes the verbose flags.
 func InitVerboseFlags(flag *pflag.FlagSet) {
 	flag.BoolP(FlagVerbose, "v", false, "verbose output")
 }

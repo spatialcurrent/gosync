@@ -55,7 +55,7 @@ func SyncLocalToS3(source string, bucket string, keyPrefix string, uploader *s3m
 		}
 		key := filepath.Join(keyPrefix, r)
 		if verbose {
-			fmt.Println(fmt.Sprintf("[ %d ] : %s => s3://%s/%s", i+1, fillRight(p, sourceMaxLength), bucket, key))
+			fmt.Printf("[ %d ] : %s => s3://%s/%s\n", i+1, fillRight(p, sourceMaxLength), bucket, key)
 		}
 		g.Go(func() error {
 			err := s3util.Upload(&s3util.UploadInput{
