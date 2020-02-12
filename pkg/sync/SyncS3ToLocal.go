@@ -62,17 +62,26 @@ func SyncS3ToLocal(input *SyncS3ToLocalInput) error {
 		if err != nil {
 			break
 		}
+
 		key := aws.StringValue(object.Key)
-		r, err := filepath.Rel(input.KeyPrefix, key)
-		if err != nil {
-			return fmt.Errorf(
-				"error calculating relative path between key prefix (%q) and object key (%q): %w",
-				input.KeyPrefix,
-				key,
-				err,
-			)
+
+		destinationPath := ""
+		// if the path path the prefix does not contain any directory separators
+		if !strings.Contains(key[len(input.KeyPrefix):], "/") {
+			// Set destination path as a file within the destination directory
+			destinationPath = filepath.Join(input.Destination, filepath.Base(key))
+		} else {
+			r, err := filepath.Rel(input.KeyPrefix, key)
+			if err != nil {
+				return fmt.Errorf(
+					"error calculating relative path between key prefix (%q) and object key (%q): %w",
+					input.KeyPrefix,
+					key,
+					err,
+				)
+			}
+			destinationPath = filepath.Join(input.Destination, r)
 		}
-		destinationPath := filepath.Join(input.Destination, r)
 		if input.Verbose {
 			fmt.Printf("[ %d ] : s3://%s/%s => file://%s\n", i+1, input.Bucket, key, destinationPath)
 		}

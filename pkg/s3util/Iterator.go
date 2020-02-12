@@ -22,6 +22,7 @@ type Iterator struct {
 	marker  *string
 	objects []*s3.Object
 	err     error
+	last    bool
 	eof     bool
 }
 
@@ -34,6 +35,11 @@ func (it *Iterator) Next() (*s3.Object, error) {
 		return nil, io.EOF
 	}
 	if len(it.objects) == 0 {
+		// if the last page was already requested
+		if it.last {
+			it.eof = true
+			return nil, io.EOF
+		}
 		listObjectsOutput, err := it.client.ListObjects(&s3.ListObjectsInput{
 			Bucket: aws.String(it.bucket),
 			Prefix: aws.String(it.prefix),
@@ -51,6 +57,9 @@ func (it *Iterator) Next() (*s3.Object, error) {
 		}
 		it.objects = listObjectsOutput.Contents
 		it.marker = listObjectsOutput.Marker
+		if !aws.BoolValue(listObjectsOutput.IsTruncated) {
+			it.last = true
+		}
 	}
 
 	object := it.objects[0]
@@ -71,6 +80,7 @@ func NewIterator(input *NewIteratorInput) *Iterator {
 		prefix:  input.Prefix,
 		marker:  nil,
 		objects: make([]*s3.Object, 0),
+		last:    false,
 		eof:     false,
 	}
 }

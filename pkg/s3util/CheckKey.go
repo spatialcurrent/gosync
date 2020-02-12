@@ -27,11 +27,5 @@ func CheckKey(prefix string) error {
 	if strings.Contains(prefix, "*") {
 		return &KeyError{Value: fmt.Sprintf("key cannot contain \"*\": %q", prefix)}
 	}
-	if strings.HasPrefix(prefix, "/") {
-		return &KeyError{Value: fmt.Sprintf("key cannot start with \"/\": %q", prefix)}
-	}
-	if strings.HasSuffix(prefix, "/") {
-		return &KeyError{Value: fmt.Sprintf("key cannot end with \"/\": %q", prefix)}
-	}
 	return nil
 }
