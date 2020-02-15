@@ -5,6 +5,8 @@
 //
 // =================================================================
 
+// Package group contains a struct that wraps errgroup.Group.
+//	- "golang.org/x/sync/errgroup"
 package group
 
 import (
