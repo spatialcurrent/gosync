@@ -1,6 +1,6 @@
 // =================================================================
 //
-// Copyright (C) 2019 Spatial Current, Inc. - All Rights Reserved
+// Copyright (C) 2020 Spatial Current, Inc. - All Rights Reserved
 // Released as open source under the MIT License.  See LICENSE file.
 //
 // =================================================================
@@ -16,11 +16,13 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
+	"github.com/spatialcurrent/gosync/pkg/awsutil"
 	"github.com/spatialcurrent/gosync/pkg/cli"
 	"github.com/spatialcurrent/gosync/pkg/sync"
 )
 
 func initFlags(flag *pflag.FlagSet) {
+	cli.InitAWSFlags(flag)
 	cli.InitSyncFlags(flag)
 	cli.InitVerboseFlags(flag)
 }
@@ -67,13 +69,44 @@ func main() {
 			source := args[0]
 			destination := args[1]
 
-			err = sync.Sync(&sync.SyncInput{
+			syncInput := &sync.SyncInput{
+				Credentials: nil,
 				Source:      source,
 				Destination: destination,
 				Parents:     v.GetBool(cli.FlagParents),
 				Limit:       v.GetInt(cli.FlagLimit),
 				Verbose:     verbose,
-			})
+				PoolSize:    v.GetInt(cli.FlagPoolSize),
+				StopOnError: v.GetBool(cli.FlagStopOnError),
+			}
+
+			if strings.HasPrefix(source, "s3://") || strings.HasPrefix(destination, "s3://") {
+
+				region := v.GetString(cli.FlagAWSRegion)
+				if len(region) == 0 {
+					if defaultRegion := v.GetString(cli.FlagAWSDefaultRegion); len(defaultRegion) > 0 {
+						region = defaultRegion
+					}
+				}
+
+				if role := v.GetString(cli.FlagAWSRoleARN); len(role) > 0 {
+					s, err := awsutil.NewSession(&awsutil.NewSessionInput{
+						Credentials: nil,
+						Region:      region,
+						Verbose:     verbose,
+					})
+					if err != nil {
+						return fmt.Errorf("error creating AWS Session: %w", err)
+					}
+					syncInput.Credentials = awsutil.NewCredentials(&awsutil.NewCredentialsInput{
+						Session:      s,
+						Role:         role,
+						SerialNumber: v.GetString(cli.FlagAWSMFASerial),
+					})
+				}
+			}
+
+			err = sync.Sync(syncInput)
 			if err != nil {
 				return fmt.Errorf("error syncing from %q to %q: %w", source, destination, err)
 			}
