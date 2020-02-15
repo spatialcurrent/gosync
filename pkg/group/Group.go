@@ -24,23 +24,32 @@ type Group struct {
 }
 
 func (g *Group) Go(f func() error) {
+	// if stopped, then return immediately
 	g.mutex.Lock()
-	defer g.mutex.Unlock()
 	if g.stop {
+		g.mutex.Unlock()
 		return
 	}
+	g.mutex.Unlock()
+	// if limit was exceeded, then return immediately without scheduling goroutine
 	if g.limit > 0 && g.count >= g.limit {
 		return
 	}
 	g.Group.Go(func() error {
+		// if stopped, then return immediately
 		g.mutex.Lock()
-		defer g.mutex.Unlock()
 		if g.stop {
+			g.mutex.Unlock()
 			return nil
 		}
+		g.mutex.Unlock()
+		// allocate file descriptor
 		g.pool <- true
+		// unallocate file descriptor after function executes
 		defer func() { <-g.pool }()
+		// execute given function in this goroutine
 		err := f()
+		// if function returned an error and stopOnError is set, then set stop.
 		if err != nil && g.stopOnError {
 			g.stop = true
 		}

@@ -52,7 +52,7 @@ Flags:
   -h, --help                        help for gosync
   -l, --limit int                   limit number of files copied (default -1)
   -p, --parents                     create parent directories
-  -s, --pool-size int               pool size (default 1)
+  -s, --pool-size int               pool size (number of concurrent downloads or uploads) (default 1)
   -e, --stop-on-error               stop on error
   -v, --verbose                     verbose output
 ```

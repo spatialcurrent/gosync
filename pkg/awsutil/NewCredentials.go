@@ -8,7 +8,6 @@
 package awsutil
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"sync"
@@ -19,6 +18,10 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 
 	"github.com/spatialcurrent/goprompt/pkg/prompt"
+)
+
+const (
+	MaxNumberOfMFATokenRequests = 100
 )
 
 type NewCredentialsInput struct {
@@ -36,8 +39,8 @@ func NewCredentials(input *NewCredentialsInput) *credentials.Credentials {
 			p.TokenProvider = func() (string, error) {
 				mutex.Lock()
 				defer mutex.Unlock()
-				if count > 4 {
-					return "", errors.New("too many requests")
+				if count > MaxNumberOfMFATokenRequests {
+					return "", fmt.Errorf("too many MFA token requests, exceeds limit of %d", MaxNumberOfMFATokenRequests)
 				}
 				v, err := prompt.String("gosync: enter MFA token", false, true) // will loop on blank entries
 				if err != nil {
