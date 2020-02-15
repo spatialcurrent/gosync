@@ -15,8 +15,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	"golang.org/x/sync/errgroup"
 
+	"github.com/spatialcurrent/gosync/pkg/group"
 	"github.com/spatialcurrent/gosync/pkg/s3util"
 )
 
@@ -28,6 +28,8 @@ type SyncS3ToLocalInput struct {
 	Downloader  *s3manager.Downloader
 	Parents     bool
 	Limit       int
+	PoolSize    int
+	StopOnError bool
 	Verbose     bool
 }
 
@@ -56,7 +58,10 @@ func SyncS3ToLocal(input *SyncS3ToLocalInput) error {
 	})
 
 	i := 0
-	var g errgroup.Group
+	g, err := group.New(input.PoolSize, input.Limit, input.StopOnError)
+	if err != nil {
+		return fmt.Errorf("error creating concurrent execution group: %w", err)
+	}
 	for {
 		object, err := it.Next()
 		if err != nil {
@@ -82,10 +87,12 @@ func SyncS3ToLocal(input *SyncS3ToLocalInput) error {
 			}
 			destinationPath = filepath.Join(input.Destination, r)
 		}
-		if input.Verbose {
-			fmt.Printf("[ %d ] : s3://%s/%s => file://%s\n", i+1, input.Bucket, key, destinationPath)
-		}
+		i := i
 		g.Go(func() error {
+			if input.Verbose {
+				fmt.Printf("[ %d ] : s3://%s/%s => file://%s\n", i+1, input.Bucket, key, destinationPath)
+			}
+			fmt.Println(fmt.Sprintf("Downloading: %#v", err))
 			err := s3util.Download(&s3util.DownloadInput{
 				Downloader: input.Downloader,
 				Bucket:     input.Bucket,
@@ -93,8 +100,9 @@ func SyncS3ToLocal(input *SyncS3ToLocalInput) error {
 				Path:       destinationPath,
 				Parents:    input.Parents,
 			})
+			fmt.Println(fmt.Sprintf("Downloading: %#v", err))
 			if err != nil {
-				return fmt.Errorf("error downloading file: %w", err)
+				return fmt.Errorf("error downloading from \"%s/%s\" to %q: %w", input.Bucket, key, destinationPath, err)
 			}
 			return nil
 		})

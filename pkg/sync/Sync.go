@@ -141,6 +141,8 @@ func Sync(input *SyncInput) error {
 				Parents:     input.Parents,
 				Limit:       input.Limit,
 				Verbose:     input.Verbose,
+				PoolSize:    input.PoolSize,
+				StopOnError: input.StopOnError,
 			})
 		}
 

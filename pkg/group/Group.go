@@ -10,6 +10,7 @@
 package group
 
 import (
+	"fmt"
 	"sync"
 
 	"golang.org/x/sync/errgroup"
@@ -60,8 +61,11 @@ func (g *Group) Go(f func() error) {
 	g.count += 1
 }
 
-func New(poolSize int, limit int, stopOnError bool) *Group {
-	return &Group{
+func New(poolSize int, limit int, stopOnError bool) (*Group, error) {
+	if poolSize <= 0 {
+		return nil, fmt.Errorf("invalid pool size %d", poolSize)
+	}
+	g := &Group{
 		pool:        make(chan bool, poolSize),
 		stopOnError: stopOnError,
 		stop:        false,
@@ -69,4 +73,5 @@ func New(poolSize int, limit int, stopOnError bool) *Group {
 		count:       0,
 		mutex:       &sync.Mutex{},
 	}
+	return g, nil
 }

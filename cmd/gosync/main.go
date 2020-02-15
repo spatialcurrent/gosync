@@ -90,13 +90,13 @@ func main() {
 				}
 
 				if role := v.GetString(cli.FlagAWSRoleARN); len(role) > 0 {
-					s, err := awsutil.NewSession(&awsutil.NewSessionInput{
+					s, errNewSession := awsutil.NewSession(&awsutil.NewSessionInput{
 						Credentials: nil,
 						Region:      region,
 						Verbose:     verbose,
 					})
-					if err != nil {
-						return fmt.Errorf("error creating AWS Session: %w", err)
+					if errNewSession != nil {
+						return fmt.Errorf("error creating AWS Session: %w", errNewSession)
 					}
 					syncInput.Credentials = awsutil.NewCredentials(&awsutil.NewCredentialsInput{
 						Session:      s,

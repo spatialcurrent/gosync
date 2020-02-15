@@ -58,7 +58,10 @@ func SyncLocalToS3(input *SyncLocalToS3Input) error {
 
 	sourceMaxLength := maxLength(sourcePaths)
 
-	g := group.New(input.PoolSize, input.Limit, input.StopOnError)
+	g, err := group.New(input.PoolSize, input.Limit, input.StopOnError)
+	if err != nil {
+		return fmt.Errorf("error creating concurrent execution group: %w", err)
+	}
 	for i, p := range sourcePaths {
 		i := i
 		p := p
@@ -78,7 +81,7 @@ func SyncLocalToS3(input *SyncLocalToS3Input) error {
 				Key:      key,
 			})
 			if err != nil {
-				return fmt.Errorf("error uploading %q to \"%s/%s\": %w", p, input.Bucket, key, err)
+				return fmt.Errorf("error uploading from %q to \"%s/%s\": %w", p, input.Bucket, key, err)
 			}
 			return nil
 		})
