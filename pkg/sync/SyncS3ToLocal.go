@@ -57,11 +57,12 @@ func SyncS3ToLocal(input *SyncS3ToLocalInput) error {
 		Prefix: input.KeyPrefix,
 	})
 
-	i := 0
 	g, err := group.New(input.PoolSize, input.Limit, input.StopOnError)
 	if err != nil {
 		return fmt.Errorf("error creating concurrent execution group: %w", err)
 	}
+
+	i := 0
 	for {
 		object, err := it.Next()
 		if err != nil {
@@ -87,12 +88,11 @@ func SyncS3ToLocal(input *SyncS3ToLocalInput) error {
 			}
 			destinationPath = filepath.Join(input.Destination, r)
 		}
-		i := i
+		index := i
 		g.Go(func() error {
 			if input.Verbose {
-				fmt.Printf("[ %d ] : s3://%s/%s => file://%s\n", i+1, input.Bucket, key, destinationPath)
+				fmt.Printf("[ %d ] : s3://%s/%s => file://%s\n", index+1, input.Bucket, key, destinationPath)
 			}
-			fmt.Println(fmt.Sprintf("Downloading: %#v", err))
 			err := s3util.Download(&s3util.DownloadInput{
 				Downloader: input.Downloader,
 				Bucket:     input.Bucket,
@@ -100,13 +100,12 @@ func SyncS3ToLocal(input *SyncS3ToLocalInput) error {
 				Path:       destinationPath,
 				Parents:    input.Parents,
 			})
-			fmt.Println(fmt.Sprintf("Downloading: %#v", err))
 			if err != nil {
 				return fmt.Errorf("error downloading from \"%s/%s\" to %q: %w", input.Bucket, key, destinationPath, err)
 			}
 			return nil
 		})
-		i++
+		i += 1
 		if input.Limit > 0 && i == input.Limit {
 			break
 		}
