@@ -8,6 +8,7 @@
 package s3util
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -19,6 +20,7 @@ import (
 )
 
 type DownloadInput struct {
+	Context    context.Context
 	Downloader *s3manager.Downloader
 	Bucket     string
 	Key        string
@@ -40,7 +42,7 @@ func Download(input *DownloadInput) error {
 	if err != nil {
 		return fmt.Errorf("error creating destination file %q: %w", input.Path, err)
 	}
-	_, err = input.Downloader.Download(file, &s3.GetObjectInput{
+	_, err = input.Downloader.DownloadWithContext(input.Context, file, &s3.GetObjectInput{
 		Bucket: aws.String(input.Bucket),
 		Key:    aws.String(input.Key),
 	})

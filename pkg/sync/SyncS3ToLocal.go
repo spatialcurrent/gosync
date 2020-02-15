@@ -8,14 +8,18 @@
 package sync
 
 import (
+	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 
+	"github.com/spatialcurrent/go-deadline/pkg/deadline"
 	"github.com/spatialcurrent/gosync/pkg/group"
 	"github.com/spatialcurrent/gosync/pkg/s3util"
 )
@@ -93,13 +97,29 @@ func SyncS3ToLocal(input *SyncS3ToLocalInput) error {
 			if input.Verbose {
 				fmt.Printf("[ %d ] : s3://%s/%s => file://%s\n", index+1, input.Bucket, key, destinationPath)
 			}
-			err := s3util.Download(&s3util.DownloadInput{
+			ctx, cancel := context.WithCancel(context.Background())
+			d, err := deadline.New(30*time.Second, func(ctx context.Context) {
+				err := fmt.Errorf("deadline reached for s3://%s/%s", input.Bucket, key)
+				fmt.Fprintf(os.Stderr, err.Error()+"\n")
+				//panic(err)
+				cancel()
+			})
+			if err != nil {
+				return fmt.Errorf("error creating deadline")
+			}
+			err = d.Start(ctx)
+			if err != nil {
+				return fmt.Errorf("error starting deadline")
+			}
+			err = s3util.Download(&s3util.DownloadInput{
+				Context:    ctx,
 				Downloader: input.Downloader,
 				Bucket:     input.Bucket,
 				Key:        aws.StringValue(object.Key),
 				Path:       destinationPath,
 				Parents:    input.Parents,
 			})
+			d.Cancel()
 			if err != nil {
 				return fmt.Errorf("error downloading from \"%s/%s\" to %q: %w", input.Bucket, key, destinationPath, err)
 			}
@@ -114,6 +134,8 @@ func SyncS3ToLocal(input *SyncS3ToLocalInput) error {
 	if err := g.Wait(); err != nil {
 		return err
 	}
+
+	fmt.Println("Done watiting")
 
 	if err := it.Error(); err != nil {
 		return fmt.Errorf("error iterating over source s3://%s/%s: %w", input.Bucket, input.KeyPrefix, err)
