@@ -45,10 +45,16 @@ Usage:
   gosync SOURCE DESTINATION
 
 Flags:
-  -h, --help        help for gosync
-  -l, --limit int   limit number of files copied (default -1)
-  -p, --parents     create parent directories
-  -v, --verbose     verbose output
+      --aws-default-region string   AWS Default Region
+      --aws-mfa-serial string       AWS MFA Serial
+      --aws-region string           AWS Region (overrides default region)
+      --aws-role-arn string         AWS Role ARN
+  -h, --help                        help for gosync
+  -l, --limit int                   limit number of files copied (default -1)
+  -p, --parents                     create parent directories
+  -s, --pool-size int               pool size (default 1)
+  -e, --stop-on-error               stop on error
+  -v, --verbose                     verbose output
 ```
 
 # Examples
