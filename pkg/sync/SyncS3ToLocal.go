@@ -10,7 +10,6 @@ package sync
 import (
 	"context"
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -19,7 +18,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 
-	"github.com/spatialcurrent/go-deadline/pkg/deadline"
 	"github.com/spatialcurrent/gosync/pkg/group"
 	"github.com/spatialcurrent/gosync/pkg/s3util"
 )
@@ -35,6 +33,7 @@ type SyncS3ToLocalInput struct {
 	PoolSize    int
 	StopOnError bool
 	Verbose     bool
+	Timeout     time.Duration
 }
 
 func SyncS3ToLocal(input *SyncS3ToLocalInput) error {
@@ -97,19 +96,14 @@ func SyncS3ToLocal(input *SyncS3ToLocalInput) error {
 			if input.Verbose {
 				fmt.Printf("[ %d ] : s3://%s/%s => file://%s\n", index+1, input.Bucket, key, destinationPath)
 			}
-			ctx, cancel := context.WithCancel(context.Background())
-			d, err := deadline.New(30*time.Second, func(ctx context.Context) {
-				err := fmt.Errorf("deadline reached for s3://%s/%s", input.Bucket, key)
-				fmt.Fprintf(os.Stderr, err.Error()+"\n")
-				//panic(err)
-				cancel()
-			})
-			if err != nil {
-				return fmt.Errorf("error creating deadline")
-			}
-			err = d.Start(ctx)
-			if err != nil {
-				return fmt.Errorf("error starting deadline")
+			ctx := context.Background()
+			if int(input.Timeout) > 0 {
+				c, cancel := context.WithTimeout(ctx, input.Timeout)
+				if err != nil {
+					return fmt.Errorf("error creating timeout: %w", err)
+				}
+				ctx = c
+				defer cancel()
 			}
 			err = s3util.Download(&s3util.DownloadInput{
 				Context:    ctx,
@@ -119,7 +113,6 @@ func SyncS3ToLocal(input *SyncS3ToLocalInput) error {
 				Path:       destinationPath,
 				Parents:    input.Parents,
 			})
-			d.Cancel()
 			if err != nil {
 				return fmt.Errorf("error downloading from \"%s/%s\" to %q: %w", input.Bucket, key, destinationPath, err)
 			}
@@ -135,7 +128,7 @@ func SyncS3ToLocal(input *SyncS3ToLocalInput) error {
 		return err
 	}
 
-	fmt.Println("Done watiting")
+	fmt.Println("Done downloading files.")
 
 	if err := it.Error(); err != nil {
 		return fmt.Errorf("error iterating over source s3://%s/%s: %w", input.Bucket, input.KeyPrefix, err)

@@ -46,7 +46,7 @@ func (it *Iterator) Next() (*s3.Object, error) {
 			Marker: it.marker,
 		})
 		if err != nil {
-			it.err = fmt.Errorf("error listing objets from marker %q", aws.StringValue(it.marker))
+			it.err = fmt.Errorf("error listing objets from marker %q: %w", aws.StringValue(it.marker), err)
 			return nil, it.err
 		} else {
 			it.err = nil

@@ -10,6 +10,7 @@ package sync
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -46,6 +47,7 @@ type SyncInput struct {
 	Credentials *credentials.Credentials
 	PoolSize    int
 	StopOnError bool
+	Timeout     time.Duration
 }
 
 func Sync(input *SyncInput) error {
@@ -100,6 +102,7 @@ func Sync(input *SyncInput) error {
 				PoolSize:    input.PoolSize,
 				Verbose:     input.Verbose,
 				StopOnError: input.StopOnError,
+				Timeout:     input.Timeout,
 			})
 		}
 
@@ -143,6 +146,7 @@ func Sync(input *SyncInput) error {
 				Verbose:     input.Verbose,
 				PoolSize:    input.PoolSize,
 				StopOnError: input.StopOnError,
+				Timeout:     input.Timeout,
 			})
 		}
 

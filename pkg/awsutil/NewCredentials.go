@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -25,6 +26,7 @@ const (
 )
 
 type NewCredentialsInput struct {
+	Duration     time.Duration
 	Session      *session.Session
 	Role         string
 	SerialNumber string
@@ -35,6 +37,7 @@ func NewCredentials(input *NewCredentialsInput) *credentials.Credentials {
 		count := 0
 		mutex := &sync.Mutex{}
 		return stscreds.NewCredentials(input.Session, input.Role, func(p *stscreds.AssumeRoleProvider) {
+			p.Duration = input.Duration
 			p.SerialNumber = aws.String(input.SerialNumber)
 			p.TokenProvider = func() (string, error) {
 				mutex.Lock()

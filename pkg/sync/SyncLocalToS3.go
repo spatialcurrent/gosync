@@ -8,9 +8,11 @@
 package sync
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 
@@ -27,6 +29,7 @@ type SyncLocalToS3Input struct {
 	StopOnError bool
 	Limit       int
 	Verbose     bool
+	Timeout     time.Duration
 }
 
 func SyncLocalToS3(input *SyncLocalToS3Input) error {
@@ -74,7 +77,17 @@ func SyncLocalToS3(input *SyncLocalToS3Input) error {
 			if input.Verbose {
 				fmt.Printf("[ %d ] : %s => s3://%s/%s\n", i+1, fillRight(p, sourceMaxLength), input.Bucket, key)
 			}
+			ctx := context.Background()
+			if int(input.Timeout) > 0 {
+				c, cancel := context.WithTimeout(ctx, input.Timeout)
+				if err != nil {
+					return fmt.Errorf("error creating timeout: %w", err)
+				}
+				ctx = c
+				defer cancel()
+			}
 			err := s3util.Upload(&s3util.UploadInput{
+				Context:  ctx,
 				Uploader: input.Uploader,
 				Path:     p,
 				Bucket:   input.Bucket,

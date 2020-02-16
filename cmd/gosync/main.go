@@ -42,6 +42,9 @@ func checkConfig(v *viper.Viper, args []string) error {
 	if len(args) != 2 {
 		return fmt.Errorf("expecting 2 positional arguments for source and destination, but found %d arguments", len(args))
 	}
+	if err := cli.CheckAWSConfig(v); err != nil {
+		return fmt.Errorf("error with AWS configuration: %w", err)
+	}
 	return nil
 }
 
@@ -78,6 +81,7 @@ func main() {
 				Verbose:     verbose,
 				PoolSize:    v.GetInt(cli.FlagPoolSize),
 				StopOnError: v.GetBool(cli.FlagStopOnError),
+				Timeout:     v.GetDuration(cli.FlagTimeout),
 			}
 
 			if strings.HasPrefix(source, "s3://") || strings.HasPrefix(destination, "s3://") {
@@ -99,6 +103,7 @@ func main() {
 						return fmt.Errorf("error creating AWS Session: %w", errNewSession)
 					}
 					syncInput.Credentials = awsutil.NewCredentials(&awsutil.NewCredentialsInput{
+						Duration:     v.GetDuration(cli.FlagAWSAssumeRoleDuration),
 						Session:      s,
 						Role:         role,
 						SerialNumber: v.GetString(cli.FlagAWSMFASerial),
