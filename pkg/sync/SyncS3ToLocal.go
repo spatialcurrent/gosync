@@ -99,11 +99,8 @@ func SyncS3ToLocal(input *SyncS3ToLocalInput) error {
 			ctx := context.Background()
 			if int(input.Timeout) > 0 {
 				c, cancel := context.WithTimeout(ctx, input.Timeout)
-				if err != nil {
-					return fmt.Errorf("error creating timeout: %w", err)
-				}
-				ctx = c
 				defer cancel()
+				ctx = c
 			}
 			err = s3util.Download(&s3util.DownloadInput{
 				Context:    ctx,
