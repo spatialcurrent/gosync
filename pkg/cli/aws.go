@@ -9,9 +9,10 @@ package cli
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"time"
 )
 
 const (
@@ -35,7 +36,7 @@ func InitAWSFlags(flag *pflag.FlagSet) {
 	flag.StringP(FlagAWSRegion, "", "", "AWS Region (overrides default region)")
 	flag.String(FlagAWSRoleARN, "", "AWS Role ARN")
 	flag.Duration(FlagAWSAssumeRoleDuration, DefaultAWSAssumeRoleDuration, "Expiry duration of the STS credentials for assuming a role.")
-	flag.Int(FlagAWSIteratorMaxKeys, 1000, "maximum number of keys returned when listing objects in AWS S3")
+	flag.Int(FlagAWSIteratorMaxKeys, DefaultAWSIteratorMaxKeys, "maximum number of keys returned when listing objects in AWS S3")
 }
 
 func CheckAWSConfig(v *viper.Viper) error {

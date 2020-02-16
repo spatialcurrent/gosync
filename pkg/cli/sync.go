@@ -8,8 +8,9 @@
 package cli
 
 import (
-	"github.com/spf13/pflag"
 	"time"
+
+	"github.com/spf13/pflag"
 )
 
 const (
