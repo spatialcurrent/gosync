@@ -47,6 +47,7 @@ Usage:
 Flags:
       --aws-assume-role-duration duration   Expiry duration of the STS credentials for assuming a role. (default 15m0s)
       --aws-default-region string           AWS Default Region
+      --aws-iterator-max-keys int           maximum number of keys returned when listing objects in AWS S3 (default 1000)
       --aws-mfa-serial string               AWS MFA Serial
       --aws-region string                   AWS Region (overrides default region)
       --aws-role-arn string                 AWS Role ARN

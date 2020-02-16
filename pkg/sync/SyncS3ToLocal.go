@@ -127,8 +127,6 @@ func SyncS3ToLocal(input *SyncS3ToLocalInput) error {
 		return err
 	}
 
-	fmt.Println("Done downloading files.")
-
 	if err := it.Error(); err != nil {
 		return fmt.Errorf("error iterating over source s3://%s/%s: %w", input.Bucket, input.KeyPrefix, err)
 	}
