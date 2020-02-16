@@ -82,6 +82,7 @@ func main() {
 				PoolSize:    v.GetInt(cli.FlagPoolSize),
 				StopOnError: v.GetBool(cli.FlagStopOnError),
 				Timeout:     v.GetDuration(cli.FlagTimeout),
+				MaxKeys:     v.GetInt(cli.FlagAWSIteratorMaxKeys),
 			}
 
 			if strings.HasPrefix(source, "s3://") || strings.HasPrefix(destination, "s3://") {

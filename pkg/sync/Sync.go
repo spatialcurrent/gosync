@@ -48,6 +48,7 @@ type SyncInput struct {
 	PoolSize    int
 	StopOnError bool
 	Timeout     time.Duration
+	MaxKeys     int
 }
 
 func Sync(input *SyncInput) error {
@@ -147,6 +148,7 @@ func Sync(input *SyncInput) error {
 				PoolSize:    input.PoolSize,
 				StopOnError: input.StopOnError,
 				Timeout:     input.Timeout,
+				MaxKeys:     input.MaxKeys,
 			})
 		}
 

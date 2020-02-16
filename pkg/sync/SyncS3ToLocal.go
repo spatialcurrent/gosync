@@ -34,6 +34,7 @@ type SyncS3ToLocalInput struct {
 	StopOnError bool
 	Verbose     bool
 	Timeout     time.Duration
+	MaxKeys     int
 }
 
 func SyncS3ToLocal(input *SyncS3ToLocalInput) error {
@@ -55,9 +56,10 @@ func SyncS3ToLocal(input *SyncS3ToLocalInput) error {
 	}
 
 	it := s3util.NewIterator(&s3util.NewIteratorInput{
-		Client: input.Client,
-		Bucket: input.Bucket,
-		Prefix: input.KeyPrefix,
+		Client:  input.Client,
+		Bucket:  input.Bucket,
+		Prefix:  input.KeyPrefix,
+		MaxKeys: input.MaxKeys,
 	})
 
 	g, err := group.New(input.PoolSize, input.Limit, input.StopOnError)
