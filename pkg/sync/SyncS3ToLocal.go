@@ -80,13 +80,13 @@ func SyncS3ToLocal(input *SyncS3ToLocalInput) error {
 			// Set destination path as a file within the destination directory
 			destinationPath = filepath.Join(input.Destination, filepath.Base(key))
 		} else {
-			r, err := filepath.Rel(input.KeyPrefix, key)
-			if err != nil {
+			r, errRel := filepath.Rel(input.KeyPrefix, key)
+			if errRel != nil {
 				return fmt.Errorf(
 					"error calculating relative path between key prefix (%q) and object key (%q): %w",
 					input.KeyPrefix,
 					key,
-					err,
+					errRel,
 				)
 			}
 			destinationPath = filepath.Join(input.Destination, r)
