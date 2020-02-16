@@ -45,10 +45,19 @@ Usage:
   gosync SOURCE DESTINATION
 
 Flags:
-  -h, --help        help for gosync
-  -l, --limit int   limit number of files copied (default -1)
-  -p, --parents     create parent directories
-  -v, --verbose     verbose output
+      --aws-assume-role-duration duration   Expiry duration of the STS credentials for assuming a role. (default 15m0s)
+      --aws-default-region string           AWS Default Region
+      --aws-iterator-max-keys int           maximum number of keys returned when listing objects in AWS S3 (default 1000)
+      --aws-mfa-serial string               AWS MFA Serial
+      --aws-region string                   AWS Region (overrides default region)
+      --aws-role-arn string                 AWS Role ARN
+  -h, --help                                help for gosync
+  -l, --limit int                           limit number of files copied (default -1)
+  -p, --parents                             create parent directories of destination if they do not exist
+  -s, --pool-size int                       pool size (number of concurrent downloads or uploads) (default 1)
+  -e, --stop-on-error                       stop copying file if there is an error copying any of them
+  -t, --timeout duration                    maximum duration for copying an individual file before aborting
+  -v, --verbose                             verbose output
 ```
 
 # Examples

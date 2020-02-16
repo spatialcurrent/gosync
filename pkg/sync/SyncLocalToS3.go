@@ -1,6 +1,6 @@
 // =================================================================
 //
-// Copyright (C) 2019 Spatial Current, Inc. - All Rights Reserved
+// Copyright (C) 2020 Spatial Current, Inc. - All Rights Reserved
 // Released as open source under the MIT License.  See LICENSE file.
 //
 // =================================================================
@@ -8,65 +8,90 @@
 package sync
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	"golang.org/x/sync/errgroup"
 
+	"github.com/spatialcurrent/gosync/pkg/group"
 	"github.com/spatialcurrent/gosync/pkg/s3util"
 )
 
-func SyncLocalToS3(source string, bucket string, keyPrefix string, uploader *s3manager.Uploader, verbose bool) error {
+type SyncLocalToS3Input struct {
+	Source      string
+	Bucket      string
+	KeyPrefix   string
+	Uploader    *s3manager.Uploader
+	PoolSize    int
+	StopOnError bool
+	Limit       int
+	Verbose     bool
+	Timeout     time.Duration
+}
 
-	if strings.HasPrefix(source, "~") {
-		return fmt.Errorf("source %q starts with \"~\"", source)
+func SyncLocalToS3(input *SyncLocalToS3Input) error {
+
+	if strings.HasPrefix(input.Source, "~") {
+		return fmt.Errorf("source %q starts with \"~\"", input.Source)
 	}
 
-	if strings.HasPrefix(bucket, "~") {
-		return fmt.Errorf("destination bucket %q starts with \"~\"", bucket)
+	if strings.HasPrefix(input.Bucket, "~") {
+		return fmt.Errorf("destination bucket %q starts with \"~\"", input.Bucket)
 	}
 
-	if strings.HasPrefix(keyPrefix, "~") {
-		return fmt.Errorf("destination key prefix %q starts with \"~\"", keyPrefix)
+	if strings.HasPrefix(input.KeyPrefix, "~") {
+		return fmt.Errorf("destination key prefix %q starts with \"~\"", input.KeyPrefix)
 	}
 
-	sourcePaths, err := CollectFiles([]string{source})
+	sourcePaths, err := CollectFiles([]string{input.Source})
 	if err != nil {
-		return fmt.Errorf("error collecting files from %q: %w", source, err)
+		return fmt.Errorf("error collecting files from %q: %w", input.Source, err)
 	}
 
-	if strings.Contains(bucket, WildcardCharacter) {
-		return fmt.Errorf("destination bucket cannot contain wildcard: %q", bucket)
+	if strings.Contains(input.Bucket, WildcardCharacter) {
+		return fmt.Errorf("destination bucket cannot contain wildcard: %q", input.Bucket)
 	}
 
-	if strings.Contains(keyPrefix, WildcardCharacter) {
-		return fmt.Errorf("destination key prefix cannot contain wildcard: %q", keyPrefix)
+	if strings.Contains(input.KeyPrefix, WildcardCharacter) {
+		return fmt.Errorf("destination key prefix cannot contain wildcard: %q", input.KeyPrefix)
 	}
 
 	sourceMaxLength := maxLength(sourcePaths)
 
-	var g errgroup.Group
+	g, err := group.New(input.PoolSize, input.Limit, input.StopOnError)
+	if err != nil {
+		return fmt.Errorf("error creating concurrent execution group: %w", err)
+	}
 	for i, p := range sourcePaths {
+		i := i
 		p := p
-		r, err := filepath.Rel(source, p)
+		r, err := filepath.Rel(input.Source, p)
 		if err != nil {
-			return fmt.Errorf("error calculating relative path between %q and %q: %w", source, p, err)
+			return fmt.Errorf("error calculating relative path between %q and %q: %w", input.Source, p, err)
 		}
-		key := filepath.Join(keyPrefix, r)
-		if verbose {
-			fmt.Printf("[ %d ] : %s => s3://%s/%s\n", i+1, fillRight(p, sourceMaxLength), bucket, key)
-		}
+		key := filepath.Join(input.KeyPrefix, r)
 		g.Go(func() error {
+			if input.Verbose {
+				fmt.Printf("[ %d ] : %s => s3://%s/%s\n", i+1, fillRight(p, sourceMaxLength), input.Bucket, key)
+			}
+			ctx := context.Background()
+			if int(input.Timeout) > 0 {
+				c, cancel := context.WithTimeout(ctx, input.Timeout)
+				defer cancel()
+				ctx = c
+			}
 			err := s3util.Upload(&s3util.UploadInput{
-				Uploader: uploader,
+				Context:  ctx,
+				Uploader: input.Uploader,
 				Path:     p,
-				Bucket:   bucket,
+				Bucket:   input.Bucket,
 				Key:      key,
 			})
 			if err != nil {
-				return fmt.Errorf("error uploading %q to \"%s/%s\": %w", p, bucket, key, err)
+				return fmt.Errorf("error uploading from %q to \"%s/%s\": %w", p, input.Bucket, key, err)
 			}
 			return nil
 		})

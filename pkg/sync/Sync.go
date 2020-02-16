@@ -1,6 +1,6 @@
 // =================================================================
 //
-// Copyright (C) 2019 Spatial Current, Inc. - All Rights Reserved
+// Copyright (C) 2020 Spatial Current, Inc. - All Rights Reserved
 // Released as open source under the MIT License.  See LICENSE file.
 //
 // =================================================================
@@ -10,7 +10,9 @@ package sync
 import (
 	"fmt"
 	"strings"
+	"time"
 
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 
@@ -42,6 +44,11 @@ type SyncInput struct {
 	Parents     bool
 	Limit       int
 	Verbose     bool
+	Credentials *credentials.Credentials
+	PoolSize    int
+	StopOnError bool
+	Timeout     time.Duration
+	MaxKeys     int
 }
 
 func Sync(input *SyncInput) error {
@@ -77,7 +84,8 @@ func Sync(input *SyncInput) error {
 			}
 
 			s, err := awsutil.NewSession(&awsutil.NewSessionInput{
-				Verbose: input.Verbose,
+				Credentials: input.Credentials,
+				Verbose:     input.Verbose,
 			})
 			if err != nil {
 				return fmt.Errorf("error creating new session: %w", err)
@@ -87,13 +95,17 @@ func Sync(input *SyncInput) error {
 				fmt.Println(MsgUploadS3)
 			}
 
-			return SyncLocalToS3(
-				sourcePath,
-				destinationPath[0:i],
-				destinationPath[i+1:],
-				s3manager.NewUploader(s),
-				input.Verbose,
-			)
+			return SyncLocalToS3(&SyncLocalToS3Input{
+				Source:      sourcePath,
+				Bucket:      destinationPath[0:i],
+				KeyPrefix:   destinationPath[i+1:],
+				Uploader:    s3manager.NewUploader(s),
+				PoolSize:    input.PoolSize,
+				Verbose:     input.Verbose,
+				StopOnError: input.StopOnError,
+				Timeout:     input.Timeout,
+				Limit:       input.Limit,
+			})
 		}
 
 		return &errUnsupported{Source: input.Source, Destination: input.Destination}
@@ -114,7 +126,8 @@ func Sync(input *SyncInput) error {
 			}
 
 			s, err := awsutil.NewSession(&awsutil.NewSessionInput{
-				Verbose: input.Verbose,
+				Credentials: input.Credentials,
+				Verbose:     input.Verbose,
 			})
 			if err != nil {
 				return fmt.Errorf("error creating new session: %w", err)
@@ -133,6 +146,10 @@ func Sync(input *SyncInput) error {
 				Parents:     input.Parents,
 				Limit:       input.Limit,
 				Verbose:     input.Verbose,
+				PoolSize:    input.PoolSize,
+				StopOnError: input.StopOnError,
+				Timeout:     input.Timeout,
+				MaxKeys:     input.MaxKeys,
 			})
 		}
 

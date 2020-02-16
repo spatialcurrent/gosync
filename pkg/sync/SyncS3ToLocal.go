@@ -1,6 +1,6 @@
 // =================================================================
 //
-// Copyright (C) 2019 Spatial Current, Inc. - All Rights Reserved
+// Copyright (C) 2020 Spatial Current, Inc. - All Rights Reserved
 // Released as open source under the MIT License.  See LICENSE file.
 //
 // =================================================================
@@ -8,15 +8,17 @@
 package sync
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	"golang.org/x/sync/errgroup"
 
+	"github.com/spatialcurrent/gosync/pkg/group"
 	"github.com/spatialcurrent/gosync/pkg/s3util"
 )
 
@@ -28,7 +30,11 @@ type SyncS3ToLocalInput struct {
 	Downloader  *s3manager.Downloader
 	Parents     bool
 	Limit       int
+	PoolSize    int
+	StopOnError bool
 	Verbose     bool
+	Timeout     time.Duration
+	MaxKeys     int
 }
 
 func SyncS3ToLocal(input *SyncS3ToLocalInput) error {
@@ -50,13 +56,18 @@ func SyncS3ToLocal(input *SyncS3ToLocalInput) error {
 	}
 
 	it := s3util.NewIterator(&s3util.NewIteratorInput{
-		Client: input.Client,
-		Bucket: input.Bucket,
-		Prefix: input.KeyPrefix,
+		Client:  input.Client,
+		Bucket:  input.Bucket,
+		Prefix:  input.KeyPrefix,
+		MaxKeys: input.MaxKeys,
 	})
 
+	g, err := group.New(input.PoolSize, input.Limit, input.StopOnError)
+	if err != nil {
+		return fmt.Errorf("error creating concurrent execution group: %w", err)
+	}
+
 	i := 0
-	var g errgroup.Group
 	for {
 		object, err := it.Next()
 		if err != nil {
@@ -71,22 +82,30 @@ func SyncS3ToLocal(input *SyncS3ToLocalInput) error {
 			// Set destination path as a file within the destination directory
 			destinationPath = filepath.Join(input.Destination, filepath.Base(key))
 		} else {
-			r, err := filepath.Rel(input.KeyPrefix, key)
-			if err != nil {
+			r, errRel := filepath.Rel(input.KeyPrefix, key)
+			if errRel != nil {
 				return fmt.Errorf(
 					"error calculating relative path between key prefix (%q) and object key (%q): %w",
 					input.KeyPrefix,
 					key,
-					err,
+					errRel,
 				)
 			}
 			destinationPath = filepath.Join(input.Destination, r)
 		}
-		if input.Verbose {
-			fmt.Printf("[ %d ] : s3://%s/%s => file://%s\n", i+1, input.Bucket, key, destinationPath)
-		}
+		index := i
 		g.Go(func() error {
-			err := s3util.Download(&s3util.DownloadInput{
+			if input.Verbose {
+				fmt.Printf("[ %d ] : s3://%s/%s => file://%s\n", index+1, input.Bucket, key, destinationPath)
+			}
+			ctx := context.Background()
+			if int(input.Timeout) > 0 {
+				c, cancel := context.WithTimeout(ctx, input.Timeout)
+				defer cancel()
+				ctx = c
+			}
+			err = s3util.Download(&s3util.DownloadInput{
+				Context:    ctx,
 				Downloader: input.Downloader,
 				Bucket:     input.Bucket,
 				Key:        aws.StringValue(object.Key),
@@ -94,11 +113,11 @@ func SyncS3ToLocal(input *SyncS3ToLocalInput) error {
 				Parents:    input.Parents,
 			})
 			if err != nil {
-				return fmt.Errorf("error downloading file: %w", err)
+				return fmt.Errorf("error downloading from \"%s/%s\" to %q: %w", input.Bucket, key, destinationPath, err)
 			}
 			return nil
 		})
-		i++
+		i += 1
 		if input.Limit > 0 && i == input.Limit {
 			break
 		}
