@@ -61,6 +61,8 @@ func SyncLocalToS3(input *SyncLocalToS3Input) error {
 
 	sourceMaxLength := maxLength(sourcePaths)
 
+	fmt.Println("Pool Size:", input.PoolSize)
+	fmt.Println("Limit:", input.Limit)
 	g, err := group.New(input.PoolSize, input.Limit, input.StopOnError)
 	if err != nil {
 		return fmt.Errorf("error creating concurrent execution group: %w", err)

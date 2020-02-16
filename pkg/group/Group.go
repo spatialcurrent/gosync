@@ -39,6 +39,11 @@ func (g *Group) Go(f func() error) {
 		return
 	}
 	g.Group.Go(func() error {
+		// allocate file descriptor
+		// blocks until file descriptor is available from pool
+		g.pool <- true
+		// unallocate file descriptor after function executes
+		defer func() { <-g.pool }()
 		// if stopped, then return immediately
 		g.mutex.Lock()
 		if g.stop {
@@ -46,15 +51,14 @@ func (g *Group) Go(f func() error) {
 			return nil
 		}
 		g.mutex.Unlock()
-		// allocate file descriptor
-		g.pool <- true
-		// unallocate file descriptor after function executes
-		defer func() { <-g.pool }()
 		// execute given function in this goroutine
 		err := f()
 		// if function returned an error and stopOnError is set, then set stop.
 		if err != nil && g.stopOnError {
+			g.mutex.Lock()
+			//fmt.Println("Locking!")
 			g.stop = true
+			g.mutex.Unlock()
 		}
 		return err
 	})

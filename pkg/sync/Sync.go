@@ -104,6 +104,7 @@ func Sync(input *SyncInput) error {
 				Verbose:     input.Verbose,
 				StopOnError: input.StopOnError,
 				Timeout:     input.Timeout,
+				Limit:       input.Limit,
 			})
 		}
 
