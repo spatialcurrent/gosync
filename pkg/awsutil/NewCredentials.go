@@ -21,10 +21,6 @@ import (
 	"github.com/spatialcurrent/goprompt/pkg/prompt"
 )
 
-//const (
-//	MaxNumberOfMFATokenRequests = 100
-//)
-
 type NewCredentialsInput struct {
 	Duration     time.Duration
 	Session      *session.Session
@@ -34,7 +30,6 @@ type NewCredentialsInput struct {
 
 func NewCredentials(input *NewCredentialsInput) *credentials.Credentials {
 	if len(input.SerialNumber) > 0 {
-		//count := 0
 		mutex := &sync.Mutex{}
 		var errPromptString error
 		return stscreds.NewCredentials(input.Session, input.Role, func(p *stscreds.AssumeRoleProvider) {
@@ -46,15 +41,11 @@ func NewCredentials(input *NewCredentialsInput) *credentials.Credentials {
 				if errPromptString != nil {
 					return "", errPromptString
 				}
-				//if count > MaxNumberOfMFATokenRequests {
-				//	return "", fmt.Errorf("too many MFA token requests, exceeds limit of %d", MaxNumberOfMFATokenRequests)
-				//}
 				v, err := prompt.String("gosync: enter MFA token", false, true) // will loop on blank entries
 				if err != nil {
 					fmt.Fprintln(os.Stderr, err.Error())
 					errPromptString = err
 				}
-				//count += 1
 				return v, err
 			}
 		})
