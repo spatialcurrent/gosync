@@ -69,6 +69,8 @@ jobs:
             - gosync_darwin_amd64
             - gosync_linux_386
             - gosync_linux_amd64
+            - gosync_linux_arm
+            - gosync_linux_arm64
             - gosync_windows_386.exe
             - gosync_windows_amd64.exe
 
