@@ -25,13 +25,31 @@ Find releases at [https://github.com/spatialcurrent/gosync/releases](https://git
 
 - `gosync_darwin_amd64` - CLI for Darwin on amd64 (includes `macOS` and `iOS` platforms)
 
+**FreeBSD**
+
+- `gosync_freebsd_386` - CLI for FreeBSD on 386
+- `gosync_freebsd_amd64` - CLI for FreeBSD on amd64
+- `gosync_freebsd_arm` - CLI for FreeBSD on arm
+
 **Linux**
 
+- `gosync_linux_386` - CLI for Linux on 386
 - `gosync_linux_amd64` - CLI for Linux on amd64
+- `gosync_linux_arm` - CLI for Linux on arm
 - `gosync_linux_arm64` - CLI for Linux on arm64
+
+**OpenBSD**
+
+- `gosync_openbsd_386` - CLI for OpenBSD on 386
+- `gosync_openbsd_amd64` - CLI for OpenBSD on amd64
+
+**Solaris**
+
+- `gosync_solaris_amd64` - CLI for Solaris on amd64
 
 **Windows**
 
+- `gosync_windows_386.exe` - CLI for Windows on 386
 - `gosync_windows_amd64.exe` - CLI for Windows on amd64
 
 ## Usage
@@ -58,6 +76,7 @@ Flags:
   -e, --stop-on-error                       stop copying file if there is an error copying any of them
   -t, --timeout duration                    maximum duration for copying an individual file before aborting
   -v, --verbose                             verbose output
+      --version                             show version
 ```
 
 # Examples
@@ -98,7 +117,7 @@ Use `make build_cli` to build executables for Linux and Windows.  Use `make inst
 
 To run CLI testes use `make test_cli`, which uses [shUnit2](https://github.com/kward/shunit2).  If you recive a `shunit2:FATAL Please declare TMPDIR with path on partition with exec permission.` error, you can modify the `TMPDIR` environment variable in line or with `export TMPDIR=<YOUR TEMP DIRECTORY HERE>`. For example:
 
-```
+```shell
 TMPDIR="/usr/local/tmp" make test_cli
 ```
 

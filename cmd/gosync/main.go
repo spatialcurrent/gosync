@@ -21,10 +21,15 @@ import (
 	"github.com/spatialcurrent/gosync/pkg/sync"
 )
 
+const (
+	GoSyncVersion = "0.0.1"
+)
+
 func initFlags(flag *pflag.FlagSet) {
 	cli.InitAWSFlags(flag)
 	cli.InitSyncFlags(flag)
 	cli.InitVerboseFlags(flag)
+	cli.InitVersionFlag(flag)
 }
 
 func initViper(cmd *cobra.Command) (*viper.Viper, error) {
@@ -61,6 +66,11 @@ func main() {
 			v, err := initViper(cmd)
 			if err != nil {
 				return fmt.Errorf("error initializing viper: %w", err)
+			}
+
+			if v.GetBool(cli.FlagVersion) {
+				fmt.Println(GoSyncVersion)
+				return nil
 			}
 
 			if errConfig := checkConfig(v, args); errConfig != nil {
