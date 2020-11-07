@@ -12,11 +12,11 @@ set -euo pipefail
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 testHelp() {
-  gosync --help
+  "${DIR}/../bin/gosync" --help
 }
 
 testLocalToLocal() {
-  gosync --parents testdata "${SHUNIT_TMPDIR}/testdata"
+  "${DIR}/../bin/gosync" --parents testdata "${SHUNIT_TMPDIR}/testdata"
   assertEquals "unexpected output for tmp/doc.1.txt" 'hello' "$(cat "${SHUNIT_TMPDIR}/testdata/doc.1.txt")"
   assertEquals "unexpected output for tmp/a/doc.1.txt" 'hello' "$(cat "${SHUNIT_TMPDIR}/testdata/a/doc.1.txt")"
   assertEquals "unexpected output for tmp/a/doc.2.txt" 'world' "$(cat "${SHUNIT_TMPDIR}/testdata/a/doc.2.txt")"
